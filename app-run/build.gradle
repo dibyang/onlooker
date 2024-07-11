@@ -1,0 +1,137 @@
+
+apply plugin: 'com.netflix.nebula.ospackage'
+build {
+    enabled = false
+}
+jar {
+    enabled = false
+}
+
+// 禁用所有以'publish'为前缀的任务
+tasks.all { task ->
+    if (task.name.startsWith('publish')) {
+        task.enabled = false
+    }
+}
+
+//通用依赖
+dependencies {
+    implementation("io.netty:netty-all:$netty_version"){
+        exclude module: 'netty-transport-native-epoll'
+        exclude module: 'netty-transport-classes-epoll'
+        exclude module: 'netty-transport-classes-kqueue'
+        exclude module: 'netty-resolver-dns-classes-macos'
+        exclude module: 'netty-transport-native-kqueue'
+        exclude module: 'netty-transport-native-unix-common'
+        exclude module: 'netty-resolver-dns-native-macos'
+    }
+}
+
+if(proc_version!=''){
+    version=proc_version
+    dependencies {
+        implementation("net.xdob.onlooker:onlooker-api:$version")
+        implementation("net.xdob.onlooker:onlooker-server:$version")
+
+    }
+}else{
+    dependencies {
+        implementation project(":onlooker-api")
+        implementation project(":onlooker-server")
+    }
+}
+
+task prepackage(type: Copy)  {
+    group 'build'
+    copy
+            {
+                from("./package-scripts/"){
+                    include('*.sh')
+                    filter(org.apache.tools.ant.filters.ReplaceTokens, tokens: [app_name:app_name])
+                }
+                into "$buildDir/ready"
+            }
+}
+
+def versionFilePath = "config/.version"
+
+// 任务：写入版本号到文件
+task writeVersionToFile {
+    doLast {
+        file(versionFilePath).text = version
+    }
+}
+
+// 确保在打包之前执行写入版本号的任务
+tasks.named('build').configure {
+    dependsOn writeVersionToFile
+}
+
+ospackage {
+    packageName = "${app_name}"
+    epoch= 1
+    release = '1'
+    os = LINUX
+    user = 'root'
+    conflicts("${app_name}")
+    prepackage
+    into "/${app_name}"
+
+    from("bin"){
+        into "bin"
+        fileMode = 0555
+        filter(org.apache.tools.ant.filters.ReplaceTokens, tokens: [app_name:app_name])
+    }
+
+    from("onlooker.service"){
+        into "/usr/lib/systemd/system/"
+        rename('onlooker.service',"${app_name}.service")
+        fileMode = 0555
+        filter(org.apache.tools.ant.filters.ReplaceTokens, tokens: [app_name:app_name])
+    }
+
+    from("config"){
+        fileType CONFIG | NOREPLACE
+        into "config"
+    }
+
+    from(configurations.runtimeClasspath){
+        into "lib"
+        exclude '*-sources.jar','*-javadoc.jar','spring-boot-devtools*.jar'
+    }
+
+
+}
+
+
+
+buildRpm {
+    group 'build'
+    preInstall file("$buildDir/ready/preInstallCentos.sh")
+    postInstall file("$buildDir/ready/postInstallCentos.sh")
+    preUninstall file("$buildDir/ready/preUninstallCentos.sh")
+}
+
+buildDeb {
+    group 'build'
+    preInstall file("$buildDir/ready/preInstallUbuntu.sh")
+    postInstall file("$buildDir/ready/postInstallUbuntu.sh")
+    preUninstall file("$buildDir/ready/preUninstallUbuntu.sh")
+}
+
+task buildOSPacks(dependsOn:[buildRpm,buildDeb]){
+    group 'build'
+}
+
+task cleanLib(type: Delete) {
+    group 'build'
+    delete "$buildDir/lib"
+}
+
+task copyJars(type: Copy, dependsOn: cleanLib) {
+    group 'build'
+    from configurations.runtimeClasspath
+    into "$buildDir/lib"
+    exclude '*-sources.jar', '*-javadoc.jar'
+}
+

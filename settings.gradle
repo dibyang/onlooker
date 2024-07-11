@@ -1,0 +1,5 @@
+rootProject.name = 'onlooker'
+include 'onlooker-server'
+include 'onlooker-api'
+include 'app-run'
+

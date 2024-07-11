@@ -1,0 +1,42 @@
+
+subprojects {
+    buildscript {
+        repositories {
+            mavenLocal()
+            mavenCentral()
+        }
+        dependencies {
+            classpath 'com.netflix.nebula:gradle-ospackage-plugin:11.0.0'
+        }
+    }
+
+    apply plugin: 'java'
+    apply plugin: "java-library"
+    apply plugin: 'maven-publish'
+    apply plugin: 'signing'
+
+
+    repositories {
+        mavenCentral()
+    }
+
+    dependencies {
+        api("io.netty:netty-all:$netty_version") {
+            exclude module: 'netty-transport-native-epoll'
+            exclude module: 'netty-transport-classes-epoll'
+            exclude module: 'netty-transport-classes-kqueue'
+            exclude module: 'netty-resolver-dns-classes-macos'
+            exclude module: 'netty-transport-native-kqueue'
+            exclude module: 'netty-transport-native-unix-common'
+            exclude module: 'netty-resolver-dns-native-macos'
+        }
+        api("org.slf4j:slf4j-api:$slf4j_version")
+        api("net.xdob.luava:luava:${luava_version}")
+
+    }
+
+    test {
+        useJUnitPlatform()
+    }
+
+}
