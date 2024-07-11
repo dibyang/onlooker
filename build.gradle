@@ -134,8 +134,8 @@ subprojects {
 
 
                 pom {
-                    name = 'evo4x'
-                    description = "evo4x 框架"
+                    name = 'onlooker'
+                    description = "旁观者，提供旁观服务"
                 }
 
                 versionMapping {
@@ -151,8 +151,8 @@ subprojects {
         repositories {
             maven {
                 // 发布仓库配置，这里基于version后缀是否为SNAPSHOT来区分发布到release库还是snapshots库
-                def releasesRepoUrl = "http://${nexus_host}:8081/repository/maven-releases/"
-                def snapshotsRepoUrl = "http://${nexus_host}:8081/repository/maven-snapshots/"
+                def releasesRepoUrl = "https://${nexus_host}:8082/repository/maven-releases/"
+                def snapshotsRepoUrl = "https://${nexus_host}:8082/repository/maven-snapshots/"
                 url = version.endsWith('SNAPSHOT') ? snapshotsRepoUrl : releasesRepoUrl
 
                 //认证用户和密码，在配置文件gradle.properties中配置
