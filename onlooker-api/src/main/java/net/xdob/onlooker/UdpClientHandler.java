@@ -67,7 +67,7 @@ public class UdpClientHandler extends SimpleChannelInboundHandler<DatagramPacket
     super.channelActive(ctx);
   }
 
-  private CompletableFuture<List<LookResponse>> postRequest(LookRequest request) {
+  private CompletableFuture<List<LookResponse>> postRequest(LookRequest request, int waitMS) {
     CompletableFuture<List<LookResponse>> completableFuture = new CompletableFuture<>();
     group.schedule(()->{
       List<LookResponse> allResponse = getAllResponse(request.getUid());
@@ -76,17 +76,17 @@ public class UdpClientHandler extends SimpleChannelInboundHandler<DatagramPacket
       }else{
         completableFuture.complete(Lists.newArrayList());
       }
-    }, Math.max(LookHelper.i.getWaitTime(), 10), TimeUnit.MILLISECONDS);
+    }, Math.max(Math.max(LookHelper.i.getWaitTime(), 10), waitMS), TimeUnit.MILLISECONDS);
     return completableFuture;
   }
 
-  public synchronized CompletableFuture<List<LookResponse>> send(LookRequest request){
+  public synchronized CompletableFuture<List<LookResponse>> send(LookRequest request, int waitMS){
     newRequest(request.getUid());
     ByteBuf buf = toByteBuf(request);
 
     DatagramPacket packet = new DatagramPacket(buf, new InetSocketAddress(ANY_ADDRESS, LookHelper.i.getServerPort()));
     doSend(packet, 0);
-    return postRequest(request);
+    return postRequest(request, waitMS);
   }
 
   void doSend( DatagramPacket packet, int failNum){

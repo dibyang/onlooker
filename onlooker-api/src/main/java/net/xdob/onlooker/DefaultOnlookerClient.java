@@ -1,17 +1,10 @@
 package net.xdob.onlooker;
 
-import com.ls.luava.security.RSAUtil;
 import io.netty.bootstrap.Bootstrap;
 import io.netty.channel.ChannelOption;
 import io.netty.channel.nio.NioEventLoopGroup;
 import io.netty.channel.socket.nio.NioDatagramChannel;
 
-import java.io.IOException;
-import java.net.URISyntaxException;
-import java.net.URL;
-import java.nio.charset.StandardCharsets;
-import java.nio.file.Files;
-import java.nio.file.Paths;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
 
@@ -52,19 +45,27 @@ public class DefaultOnlookerClient implements OnlookerClient {
 
   @Override
   public CompletableFuture<List<LookResponse>> setMessage(String owner, MessageToken messageToken) {
-    LookRequest request = LookRequest.newSet();
-    request.setOwner(owner);
-    request.setData(messageToken);
-    return udpClientHandler.send(request);
+    return setMessage(owner, messageToken, 0);
   }
-
-
 
   @Override
   public CompletableFuture<List<LookResponse>> getMessage(String owner){
+    return getMessage(owner, 0);
+  }
+
+  @Override
+  public CompletableFuture<List<LookResponse>> setMessage(String owner, MessageToken messageToken, int waitMS) {
+    LookRequest request = LookRequest.newSet();
+    request.setOwner(owner);
+    request.setData(messageToken);
+    return udpClientHandler.send(request, waitMS);
+  }
+
+  @Override
+  public CompletableFuture<List<LookResponse>> getMessage(String owner, int waitMS) {
     LookRequest request = LookRequest.newGet();
     request.setOwner(owner);
-    return udpClientHandler.send(request);
+    return udpClientHandler.send(request, waitMS);
   }
 
   public static void main(String[] args)  {
