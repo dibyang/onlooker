@@ -1,6 +1,7 @@
 package net.xdob.onlooker;
 
 import com.ls.luava.common.Jsons;
+import com.ls.luava.utils.DebugHelper;
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.Unpooled;
 import io.netty.channel.ChannelHandlerContext;
@@ -23,9 +24,12 @@ public class UdpServerHandler extends SimpleChannelInboundHandler<DatagramPacket
   protected void channelRead0(ChannelHandlerContext context, DatagramPacket msg) throws Exception {
 
     String message = msg.content().toString(CharsetUtil.UTF_8);
-    LOG.info("received message：{} from {}", message, msg.sender().getHostString());
+    String sender = msg.sender().getHostString();
+    if(DebugHelper.helper.isDebug("req", sender)) {
+      LOG.info("received request：{} from {}", message, sender);
+    }
     LookRequest lookRequest = Jsons.i.fromJson(message, LookRequest.class);
-    lookRequest.setSender(msg.sender().getHostString());
+    lookRequest.setSender(sender);
     if(LookRequestType.SET.equals(lookRequest.getLookRequestType())){
       LookResponse resp = LookResponse.c(lookRequest);
       resp.setOwner(lookRequest.getOwner());
@@ -41,6 +45,9 @@ public class UdpServerHandler extends SimpleChannelInboundHandler<DatagramPacket
         resp.setError(InvalidArgsException.INVALID_ARGS);
         resp.setErrorMessage("messageToken is null");
       }
+      if(DebugHelper.helper.isDebug("resp", sender)) {
+        LOG.info("set response：{} to {}", resp, sender);
+      }
       ByteBuf buf = toByteBuf(resp);
       context.writeAndFlush(new DatagramPacket(buf, msg.sender()));
     }else if(LookRequestType.GET.equals(lookRequest.getLookRequestType())){
@@ -48,6 +55,9 @@ public class UdpServerHandler extends SimpleChannelInboundHandler<DatagramPacket
       LookResponse resp = LookResponse.c(lookRequest);
       if(messageToken!=null){
         resp.setData(messageToken);
+      }
+      if(DebugHelper.helper.isDebug("resp", sender)) {
+        LOG.info("get response：{} to {}", resp, sender);
       }
       ByteBuf buf = toByteBuf(resp);
       context.writeAndFlush(new DatagramPacket(buf, msg.sender()));
