@@ -28,7 +28,7 @@ public class Onlooker {
           .channel(NioDatagramChannel.class)
           .option(ChannelOption.SO_BROADCAST, true)
           .handler(udpServerHandler);
-      bootstrap.bind(new InetSocketAddress(6789))
+      bootstrap.bind(new InetSocketAddress(LookHelper.i.getServerPort()))
           .channel().closeFuture();
     }
   }
@@ -70,6 +70,7 @@ public class Onlooker {
     onlooker.start();
     Runtime.getRuntime().addShutdownHook(new Thread(){
       public void run(){
+        onlooker.stop();
         LOG.info("{} is stopped", appName);
       }
     });

@@ -1,10 +1,17 @@
 package net.xdob.onlooker;
 
+import com.ls.luava.security.RSAUtil;
 import io.netty.bootstrap.Bootstrap;
 import io.netty.channel.ChannelOption;
 import io.netty.channel.nio.NioEventLoopGroup;
 import io.netty.channel.socket.nio.NioDatagramChannel;
 
+import java.io.IOException;
+import java.net.URISyntaxException;
+import java.net.URL;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Paths;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
 
@@ -60,19 +67,10 @@ public class DefaultOnlookerClient implements OnlookerClient {
     return udpClientHandler.send(request);
   }
 
-  public static void main(String[] args) throws InterruptedException {
+  public static void main(String[] args)  {
     OnlookerClient client = new DefaultOnlookerClient();
     client.start();
-    MessageToken messageToken = new MessageToken();
-    messageToken.setMessage("test2 is ok");
-    messageToken.setSigner("evo4x");
-    client.setMessage("evo4x",messageToken)
-        .whenComplete((r,e)->{
-          if(e==null){
-            System.out.println("r = " + r);
-          }
-        });
-    //Thread.sleep(1000);
+
     client.getMessage("evo4x")
         .whenComplete((r,e)->{
           if(e==null){
@@ -80,7 +78,6 @@ public class DefaultOnlookerClient implements OnlookerClient {
           }
           //client.stop();
         });
-    //Thread.sleep(1000);
     client.getMessage("evo4x")
         .whenComplete((r,e)->{
           if(e==null){

@@ -24,7 +24,7 @@ public class DefaultMessageAdmin implements MessageAdmin{
   @Override
   public void setMessage(String owner, MessageToken token) throws OnlookerException {
     if(!Strings.isNullOrEmpty(owner)&&token!=null) {
-      if (signAdmin.verify(token.getSign(), token.getMessage(), token.getSign())) {
+      if (signAdmin.verify(token.getSigner(), token.getMessage(), token.getSign())) {
         Path ownerPath = Paths.get(ETC_ONLOOKER_DATA, owner);
         try {
           File parentFile = ownerPath.toFile().getParentFile();

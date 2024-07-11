@@ -20,10 +20,10 @@ import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicReference;
 
 public class UdpClientHandler extends SimpleChannelInboundHandler<DatagramPacket> {
   static final Logger LOG = LoggerFactory.getLogger(UdpClientHandler.class);
+  public static final String ANY_ADDRESS = "255.255.255.255";
 
   private final Map<UUID, List<LookResponse>> responseMap = Maps.newConcurrentMap();
 
@@ -32,20 +32,13 @@ public class UdpClientHandler extends SimpleChannelInboundHandler<DatagramPacket
 
   private final NioEventLoopGroup group;
   private final Bootstrap bootstrap;
-  private volatile int waitTime = 5;
+
 
   public UdpClientHandler(NioEventLoopGroup group, Bootstrap bootstrap) {
     this.group = group;
     this.bootstrap = bootstrap;
   }
 
-  public int getWaitTime() {
-    return waitTime;
-  }
-
-  public void setWaitTime(int waitTime) {
-    this.waitTime = waitTime;
-  }
 
   @Override
   protected void channelRead0(ChannelHandlerContext context, DatagramPacket msg) throws Exception {
@@ -83,7 +76,7 @@ public class UdpClientHandler extends SimpleChannelInboundHandler<DatagramPacket
       }else{
         completableFuture.complete(Lists.newArrayList());
       }
-    }, Math.max(waitTime, 2), TimeUnit.SECONDS);
+    }, Math.max(LookHelper.i.getWaitTime(), 10), TimeUnit.MILLISECONDS);
     return completableFuture;
   }
 
@@ -99,7 +92,7 @@ public class UdpClientHandler extends SimpleChannelInboundHandler<DatagramPacket
     }
     if(channelFuture==null) {
       channelFuture = new CompletableFuture<>();
-      bootstrap.bind(0)
+      bootstrap.bind(LookHelper.i.getClientPort())
           .addListener(new ChannelFutureListener() {
             @Override
             public void operationComplete(ChannelFuture future) throws Exception {
@@ -110,7 +103,7 @@ public class UdpClientHandler extends SimpleChannelInboundHandler<DatagramPacket
     channelFuture.whenComplete((f,e)->{
       if (f.isSuccess()) {
         ByteBuf buf = toByteBuf(request);
-        DatagramPacket packet = new DatagramPacket(buf, new InetSocketAddress("255.255.255.255", 6789));
+        DatagramPacket packet = new DatagramPacket(buf, new InetSocketAddress(ANY_ADDRESS, LookHelper.i.getServerPort()));
         f.channel().writeAndFlush(packet);
       } else {
         doSend(request, failNum + 1);
