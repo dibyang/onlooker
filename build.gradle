@@ -1,9 +1,57 @@
 
+buildscript {
+    repositories {
+        mavenLocal()
+        maven { url "https://${nexus_host}:8082/repository/maven-public/" }
+    }
+    dependencies {
+        classpath 'net.researchgate:gradle-release:2.6.0'
+    }
+    //skip Test tasks
+    gradle.taskGraph.whenReady {
+        tasks.each { task ->
+            if (task.name.contains("test")) {
+                task.enabled = false
+            }
+        }
+    }
+}
+
+apply plugin: 'java'
+apply plugin: 'maven-publish'
+apply plugin: 'net.researchgate.release'
+
+
+
+
+release {
+    failOnUnversionedFiles = true
+    failOnCommitNeeded = true
+    failOnPublishNeeded = true
+    failOnSnapshotDependencies = false
+    failOnUpdateNeeded = true
+    revertOnFail = true
+    tagTemplate = 'v${version}'
+    scmAdapters = [
+            net.researchgate.release.GitAdapter
+    ]
+
+    git {
+        requireBranch = 'master'
+        pushToRemote = 'origin'
+        pushToBranchPrefix = ''
+        commitVersionFileOnly = false
+        signTag = false
+    }
+
+}
+
+
 subprojects {
     buildscript {
         repositories {
             mavenLocal()
-            mavenCentral()
+            maven { url "https://${nexus_host}:8082/repository/maven-public/" }
         }
         dependencies {
             classpath 'com.netflix.nebula:gradle-ospackage-plugin:11.0.0'
@@ -14,6 +62,7 @@ subprojects {
     apply plugin: "java-library"
     apply plugin: 'maven-publish'
     apply plugin: 'signing'
+
 
 
     repositories {
@@ -35,8 +84,88 @@ subprojects {
 
     }
 
-    test {
-        useJUnitPlatform()
+    //对于典型的 Java 项目，您可以添加一个javadocJar以及一个 sourceJar任务
+    task javadocJar(type: Jar) {
+        archiveClassifier = 'javadoc'
+        from javadoc
     }
+
+    task sourcesJar(type: Jar) {
+        archiveClassifier = 'sources'
+        from sourceSets.main.allSource
+    }
+
+    // javadoc 配置，这里是自定义了 java doc 的一些配置
+    javadoc {
+        description = "Generates project-level javadoc for use in -javadoc jar"
+
+        options.memberLevel = org.gradle.external.javadoc.JavadocMemberLevel.PROTECTED
+        options.author = true
+        options.version = true
+        options.header = project.name
+        options.addStringOption('Xdoclint:none', '-quiet')
+
+        // suppress warnings due to cross-module @see and @link references;
+        // note that global 'api' task does display all warnings.
+        logging.captureStandardError LogLevel.INFO
+        logging.captureStandardOutput LogLevel.INFO // suppress "## warnings" message
+        options.encoding = "UTF-8"  //编码一定要配置否则直接出错
+        options.charSet = 'UTF-8'
+    }
+
+    // 并将它们与项目 jar 本身一起连接到 artifacts 集合中：
+    artifacts {
+        archives javadocJar, sourcesJar
+    }
+
+    publishing {
+        publications {
+            mavenJava(MavenPublication) {
+                groupId = project.group
+                artifactId = project.name
+                version = project.version
+                //如果不定义，则会按照以上默认值执行
+                // 添加源码jar
+                artifact sourcesJar
+                // 添加javadocjar
+                artifact javadocJar
+                // 指定要发布的模块
+                from components.java
+
+
+                pom {
+                    name = 'evo4x'
+                    description = "evo4x 框架"
+                }
+
+                versionMapping {
+                    usage('java-api') {
+                        fromResolutionOf('runtimeClasspath')
+                    }
+                    usage('java-runtime') {
+                        fromResolutionResult()
+                    }
+                }
+            }
+        }
+        repositories {
+            maven {
+                // 发布仓库配置，这里基于version后缀是否为SNAPSHOT来区分发布到release库还是snapshots库
+                def releasesRepoUrl = "http://${nexus_host}:8081/repository/maven-releases/"
+                def snapshotsRepoUrl = "http://${nexus_host}:8081/repository/maven-snapshots/"
+                url = version.endsWith('SNAPSHOT') ? snapshotsRepoUrl : releasesRepoUrl
+
+                //认证用户和密码，在配置文件gradle.properties中配置
+                //oss-sonatype的登录用户名和密码
+                credentials {
+                    username project.rootProject.username
+                    password project.rootProject.password
+                }
+            }
+        }
+    }
+
+
+    afterReleaseBuild.dependsOn publishMavenJavaPublicationToMavenRepository
 
 }
