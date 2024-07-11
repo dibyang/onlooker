@@ -66,7 +66,8 @@ subprojects {
 
 
     repositories {
-        mavenCentral()
+        mavenLocal()
+        maven { url "https://${nexus_host}:8082/repository/maven-public/" }
     }
 
     dependencies {
