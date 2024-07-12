@@ -7,7 +7,7 @@ public enum LookHelper {
 
   public static final int DEFAULT_SERVER_PORT = 1912;
   public static final int DEFAULT_CLIENT_PORT = 0;
-  public static final int DEFAULT_WAIT_TIME = 100;
+  public static final int DEFAULT_WAIT_TIME = 200;
   /**
    * 服务器端口
    * @return 服务器端口

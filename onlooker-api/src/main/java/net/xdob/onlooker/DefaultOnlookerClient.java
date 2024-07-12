@@ -39,10 +39,6 @@ public class DefaultOnlookerClient implements OnlookerClient {
     }
   }
 
-
-
-
-
   @Override
   public CompletableFuture<List<LookResponse>> setMessage(String owner, MessageToken messageToken) {
     return setMessage(owner, messageToken, 0);
