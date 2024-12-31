@@ -1,7 +1,6 @@
 package net.xdob.onlooker;
 
 import com.google.common.base.Strings;
-import com.ls.luava.common.Jsons;
 import net.xdob.onlooker.exception.InvalidArgsException;
 import net.xdob.onlooker.exception.InvalidSignException;
 import net.xdob.onlooker.exception.OnlookerException;
@@ -10,29 +9,35 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.File;
-import java.nio.charset.StandardCharsets;
+import java.io.InputStream;
+import java.io.OutputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.nio.file.StandardOpenOption;
+import java.util.Properties;
 
 public class DefaultMessageAdmin implements MessageAdmin{
   static final Logger LOG = LoggerFactory.getLogger(DefaultMessageAdmin.class);
 
-  public static final String ETC_ONLOOKER_DATA = "/etc/onlooker/data/";
+
   private final SignAdmin signAdmin = new SignAdmin();
 
   @Override
   public void setMessage(String owner, MessageToken token) throws OnlookerException {
     if(!Strings.isNullOrEmpty(owner)&&token!=null) {
       if (signAdmin.verify(token.getSigner(), token.getMessage(), token.getSign())) {
-        Path ownerPath = Paths.get(ETC_ONLOOKER_DATA, owner);
+        Path ownerPath = Paths.get(LookHelper.i.getDataDir(), owner);
         try {
           File parentFile = ownerPath.toFile().getParentFile();
           if(!parentFile.exists()){
             parentFile.mkdirs();
           }
-          String json = Jsons.i.toJson(token);
-          Files.write(ownerPath, json.getBytes(StandardCharsets.UTF_8));
+          Properties properties = new Properties();
+          properties.putAll(token);
+          try(OutputStream os = Files.newOutputStream(ownerPath, StandardOpenOption.CREATE, StandardOpenOption.WRITE, StandardOpenOption.TRUNCATE_EXISTING)){
+            properties.store(os,"");
+          }
         } catch (Exception e){
           LOG.warn("setMessage", e);
           throw new ReadErrorException(owner);
@@ -51,12 +56,19 @@ public class DefaultMessageAdmin implements MessageAdmin{
 
   @Override
   public MessageToken getMessage(String owner) {
-    File file = Paths.get(ETC_ONLOOKER_DATA, owner).toFile();
+    File file = Paths.get(LookHelper.i.getDataDir(), owner).toFile();
     if(file.exists()){
       try {
-        byte[] bytes = Files.readAllBytes(file.toPath());
-        String json = new String(bytes, StandardCharsets.UTF_8);
-        return Jsons.i.fromJson(json, MessageToken.class);
+        MessageToken token = new MessageToken();
+        try(InputStream in = Files.newInputStream(file.toPath(), StandardOpenOption.READ)){
+          Properties properties = new Properties();
+          properties.load(in);
+          for (Object key : properties.keySet()) {
+            String name = key.toString();
+            token.put(name, properties.getProperty(name));
+          }
+        }
+        return token;
       } catch (Exception e){
         LOG.warn("getMessage fail", e);
       }

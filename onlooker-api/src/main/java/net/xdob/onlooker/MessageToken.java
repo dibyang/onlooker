@@ -1,28 +1,22 @@
 package net.xdob.onlooker;
 
+import java.util.HashMap;
+
 /**
  * 观察到的消息令牌
  */
-public class MessageToken {
-  /**
-   * 观察到的消息
-   */
-  private String message;
-  /**
-   * 消息的签名者
-   */
-  private String signer;
-  /**
-   * 消息签名
-   */
-  private String sign;
+public class MessageToken extends HashMap<String, String> {
+  public static final String MESSAGE = "message";
+  public static final String SIGNER = "signer";
+  public static final String SIGN = "sign";
+
 
   /**
    * 获取观察到的消息
    * @return 观察到的消息
    */
   public String getMessage() {
-    return message;
+    return get(MESSAGE);
   }
 
   /**
@@ -30,7 +24,7 @@ public class MessageToken {
    * @param message 观察到的消息
    */
   public void setMessage(String message) {
-    this.message = message;
+    this.put(MESSAGE, message);
   }
 
   /**
@@ -38,7 +32,7 @@ public class MessageToken {
    * @return 消息的签名者
    */
   public String getSigner() {
-    return signer;
+    return get(SIGNER);
   }
 
   /**
@@ -46,7 +40,7 @@ public class MessageToken {
    * @param signer 消息的签名者
    */
   public void setSigner(String signer) {
-    this.signer = signer;
+    this.put(SIGNER, signer);
   }
 
   /**
@@ -54,7 +48,7 @@ public class MessageToken {
    * @return 消息签名
    */
   public String getSign() {
-    return sign;
+    return get(SIGN);
   }
 
   /**
@@ -62,6 +56,6 @@ public class MessageToken {
    * @param sign 消息签名
    */
   public void setSign(String sign) {
-    this.sign = sign;
+    this.put(SIGN, sign);
   }
 }

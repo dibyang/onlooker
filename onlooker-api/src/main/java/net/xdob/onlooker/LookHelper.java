@@ -54,4 +54,8 @@ public enum LookHelper {
   public String getPubDir(){
     return Paths.get(getAppHome(), "pub").toString();
   }
+
+  public String getDataDir(){
+    return Paths.get(getAppHome(), "data").toString();
+  }
 }
