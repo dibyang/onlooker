@@ -2,6 +2,8 @@ package net.xdob.onlooker;
 
 import com.ls.luava.common.Types2;
 
+import java.nio.file.Paths;
+
 public enum LookHelper {
   i;
 
@@ -41,5 +43,15 @@ public enum LookHelper {
       waitTime = Types2.cast(wait_time, Integer.class).orElse(DEFAULT_WAIT_TIME);
     }
     return waitTime;
+  }
+
+  public String getAppHome(){
+    String app_home = System.getProperty("app.home", System.getProperty("user.dir"));
+    System.setProperty("app.home", app_home);
+    return app_home;
+  }
+
+  public String getPubDir(){
+    return Paths.get(getAppHome(), "pub").toString();
   }
 }

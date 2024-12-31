@@ -57,22 +57,4 @@ public class Onlooker {
     }
   }
 
-  public static void main(String[] args) {
-    String apphome = System.getProperty("app.home", System.getProperty("user.dir"));
-    System.setProperty("app.home", apphome);
-
-    String appName = System.getProperty("name", "onlooker");
-    System.setProperty("app.name", appName);
-    initLogback(Paths.get(apphome,"/config/logback.xml").toString());
-    LOG.info("app home={}", apphome);
-    LOG.info("app name={}", appName);
-    Onlooker onlooker = new Onlooker();
-    onlooker.start();
-    Runtime.getRuntime().addShutdownHook(new Thread(){
-      public void run(){
-        onlooker.stop();
-        LOG.info("{} is stopped", appName);
-      }
-    });
-  }
 }

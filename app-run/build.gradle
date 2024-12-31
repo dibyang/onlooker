@@ -95,6 +95,10 @@ ospackage {
         into "config"
     }
 
+    from("pub"){
+        into "pub"
+    }
+
     from(configurations.runtimeClasspath){
         into "lib"
         exclude '*-sources.jar','*-javadoc.jar','spring-boot-devtools*.jar'
