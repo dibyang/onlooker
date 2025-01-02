@@ -7,6 +7,7 @@ import io.netty.channel.socket.nio.NioDatagramChannel;
 
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
+import java.util.stream.Collectors;
 
 public class DefaultOnlookerClient implements OnlookerClient {
   private  NioEventLoopGroup group;
@@ -62,6 +63,28 @@ public class DefaultOnlookerClient implements OnlookerClient {
     LookRequest request = LookRequest.newGet();
     request.setOwner(owner);
     return udpClientHandler.send(request, waitMS);
+  }
+
+  @Override
+  public CompletableFuture<List<MessageToken>> getMessageToken(String owner) {
+    return getMessageToken(owner, 0);
+  }
+
+  @Override
+  public CompletableFuture<List<MessageToken>> getMessageToken(String owner, int waitMS) {
+    CompletableFuture<List<MessageToken>> future = new CompletableFuture<>();
+    getMessage(owner, waitMS)
+        .whenComplete((r,ex)->{
+          if(ex!=null){
+            future.completeExceptionally(ex);
+          }else{
+            List<MessageToken> messageTokenList = r.stream().filter(e -> e.getError() == null)
+                .map(e -> e.getData(MessageToken.class))
+                .collect(Collectors.toList());
+            future.complete(messageTokenList);
+          }
+        });
+    return future;
   }
 
   public static void main(String[] args)  {

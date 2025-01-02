@@ -40,4 +40,19 @@ public interface OnlookerClient {
    * @return 消息返回结果
    */
   CompletableFuture<List<LookResponse>> getMessage(String owner, int waitMS);
+
+  /**
+   * 获取属主的被观察消息令牌
+   * @param owner 属主
+   * @return 消息返回结果
+   */
+  CompletableFuture<List<MessageToken>> getMessageToken(String owner);
+
+  /**
+   * 获取属主的被观察消息令牌
+   * @param owner 属主
+   * @param waitMS 等待结果的毫秒值
+   * @return 消息返回结果
+   */
+  CompletableFuture<List<MessageToken>> getMessageToken(String owner, int waitMS);
 }
