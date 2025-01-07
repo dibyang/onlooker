@@ -1,27 +1,26 @@
 package net.xdob.onlooker;
 
 import com.google.common.base.Strings;
+import com.google.common.collect.Maps;
 import net.xdob.onlooker.exception.InvalidArgsException;
 import net.xdob.onlooker.exception.InvalidSignException;
 import net.xdob.onlooker.exception.OnlookerException;
 import net.xdob.onlooker.exception.ReadErrorException;
+import net.xdob.onlooker.util.MessageTokenFileImpl;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.File;
-import java.io.InputStream;
-import java.io.OutputStream;
-import java.nio.file.Files;
+import java.io.*;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.nio.file.StandardOpenOption;
-import java.util.Properties;
+import java.util.Map;
 
 public class DefaultMessageAdmin implements MessageAdmin{
   static final Logger LOG = LoggerFactory.getLogger(DefaultMessageAdmin.class);
 
 
   private final SignAdmin signAdmin = new SignAdmin();
+  private final Map<String, MessageTokenFileImpl> owners = Maps.newConcurrentMap();
 
   @Override
   public void setMessage(String owner, MessageToken token) throws OnlookerException {
@@ -33,11 +32,9 @@ public class DefaultMessageAdmin implements MessageAdmin{
           if(!parentFile.exists()){
             parentFile.mkdirs();
           }
-          Properties properties = new Properties();
-          properties.putAll(token);
-          try(OutputStream os = Files.newOutputStream(ownerPath, StandardOpenOption.CREATE, StandardOpenOption.WRITE, StandardOpenOption.TRUNCATE_EXISTING)){
-            properties.store(os,"");
-          }
+          MessageTokenFileImpl termIndexFile = owners.computeIfAbsent(owner, k->new MessageTokenFileImpl(ownerPath.toFile()));
+
+          termIndexFile.persist(token);
         } catch (Exception e){
           LOG.warn("setMessage", e);
           throw new ReadErrorException(owner);
@@ -59,16 +56,8 @@ public class DefaultMessageAdmin implements MessageAdmin{
     File file = Paths.get(LookHelper.i.getDataDir(), owner).toFile();
     if(file.exists()){
       try {
-        MessageToken token = new MessageToken();
-        try(InputStream in = Files.newInputStream(file.toPath(), StandardOpenOption.READ)){
-          Properties properties = new Properties();
-          properties.load(in);
-          for (Object key : properties.keySet()) {
-            String name = key.toString();
-            token.put(name, properties.getProperty(name));
-          }
-        }
-        return token;
+        MessageTokenFileImpl termIndexFile = owners.computeIfAbsent(owner, k->new MessageTokenFileImpl(file));
+        return termIndexFile.getMetadata();
       } catch (Exception e){
         LOG.warn("getMessage fail", e);
       }

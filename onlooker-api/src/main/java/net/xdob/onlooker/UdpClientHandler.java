@@ -43,7 +43,7 @@ public class UdpClientHandler extends SimpleChannelInboundHandler<DatagramPacket
   @Override
   protected void channelRead0(ChannelHandlerContext context, DatagramPacket msg) throws Exception {
     String message = msg.content().toString(CharsetUtil.UTF_8);
-    LOG.info("received message：{} from {}", message, msg.sender().getHostString());
+    //LOG.info("received message：{} from {}", message, msg.sender().getHostString());
     LookResponse response = Jsons.i.fromJson(message, LookResponse.class);
     response.setSender(msg.sender().getHostString());
     List<LookResponse> list = responseMap.get(response.getUid());
