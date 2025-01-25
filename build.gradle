@@ -1,8 +1,9 @@
 
 buildscript {
     repositories {
+        mavenCentral()
+        maven { url 'https://maven.aliyun.com/repository/public/' }
         mavenLocal()
-        maven { url "https://${nexus_host}:8082/repository/maven-public/" }
     }
     dependencies {
         classpath 'net.researchgate:gradle-release:2.6.0'
@@ -20,7 +21,17 @@ buildscript {
 apply plugin: 'java'
 apply plugin: 'maven-publish'
 apply plugin: 'net.researchgate.release'
+apply plugin: 'signing'
 
+File signing_cfg = new File("$project.rootDir/signing.properties")
+if(signing_cfg.exists()) {
+    Properties props = new Properties()
+    props.load(new FileInputStream(signing_cfg))
+    props.each { prop ->
+        project.ext.set(prop.key, prop.value)
+    }
+
+}
 
 
 
@@ -50,8 +61,9 @@ release {
 subprojects {
     buildscript {
         repositories {
+            mavenCentral()
+            maven { url 'https://maven.aliyun.com/repository/public/' }
             mavenLocal()
-            maven { url "https://${nexus_host}:8082/repository/maven-public/" }
         }
         dependencies {
             classpath 'com.netflix.nebula:gradle-ospackage-plugin:11.0.0'
@@ -66,8 +78,9 @@ subprojects {
 
 
     repositories {
+        mavenCentral()
+        maven { url 'https://maven.aliyun.com/repository/public/' }
         mavenLocal()
-        maven { url "https://${nexus_host}:8082/repository/maven-public/" }
     }
 
     dependencies {
@@ -152,20 +165,23 @@ subprojects {
         repositories {
             maven {
                 // 发布仓库配置，这里基于version后缀是否为SNAPSHOT来区分发布到release库还是snapshots库
-                def releasesRepoUrl = "https://${nexus_host}:8082/repository/maven-releases/"
-                def snapshotsRepoUrl = "https://${nexus_host}:8082/repository/maven-snapshots/"
+                def releasesRepoUrl = "https://s01.oss.sonatype.org/service/local/staging/deploy/maven2/"
+                def snapshotsRepoUrl = "https://s01.oss.sonatype.org/content/repositories/snapshots/"
                 url = version.endsWith('SNAPSHOT') ? snapshotsRepoUrl : releasesRepoUrl
 
                 //认证用户和密码，在配置文件gradle.properties中配置
                 //oss-sonatype的登录用户名和密码
                 credentials {
-                    username project.rootProject.username
-                    password project.rootProject.password
+                    username = findProperty("ossrhUsername")?:""
+                    password = findProperty("ossrhPassword")?:""
                 }
             }
         }
     }
 
+    signing {
+        sign publishing.publications.mavenJava
+    }
 
     afterReleaseBuild.dependsOn publishMavenJavaPublicationToMavenRepository
 
