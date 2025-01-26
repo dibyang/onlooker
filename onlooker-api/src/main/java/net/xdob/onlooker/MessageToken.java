@@ -1,8 +1,8 @@
 package net.xdob.onlooker;
 
-import com.ls.luava.common.N3Map;
-import com.ls.luava.common.Types;
-import com.ls.luava.common.Types2;
+
+
+import net.xdob.onlooker.util.Types2;
 
 import java.util.HashMap;
 

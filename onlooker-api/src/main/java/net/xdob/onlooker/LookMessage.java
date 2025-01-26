@@ -1,7 +1,8 @@
 package net.xdob.onlooker;
 
-import com.ls.luava.common.Jsons;
-import com.ls.luava.common.Types2;
+
+import net.xdob.onlooker.json.Jsons;
+import net.xdob.onlooker.util.Types2;
 
 import java.util.UUID;
 

@@ -19,9 +19,7 @@ buildscript {
 }
 
 apply plugin: 'java'
-apply plugin: 'maven-publish'
 apply plugin: 'net.researchgate.release'
-apply plugin: 'signing'
 
 File signing_cfg = new File("$project.rootDir/signing.properties")
 if(signing_cfg.exists()) {
@@ -32,7 +30,6 @@ if(signing_cfg.exists()) {
     }
 
 }
-
 
 
 release {
@@ -55,6 +52,17 @@ release {
         signTag = false
     }
 
+}
+
+//对于典型的 Java 项目，您可以添加一个javadocJar以及一个 sourceJar任务
+task javadocJar(type: Jar) {
+    archiveClassifier = 'javadoc'
+    from javadoc
+}
+
+task sourcesJar(type: Jar) {
+    archiveClassifier = 'sources'
+    from sourceSets.main.allSource
 }
 
 
@@ -94,7 +102,6 @@ subprojects {
             exclude module: 'netty-resolver-dns-native-macos'
         }
         api("org.slf4j:slf4j-api:$slf4j_version")
-        api("net.xdob.luava:luava:${luava_version}")
 
     }
 
@@ -132,7 +139,7 @@ subprojects {
         archives javadocJar, sourcesJar
     }
 
-    publishing {
+    publishing{
         publications {
             mavenJava(MavenPublication) {
                 groupId = project.group
@@ -146,20 +153,34 @@ subprojects {
                 // 指定要发布的模块
                 from components.java
 
-
                 pom {
                     name = 'onlooker'
                     description = "旁观者，提供旁观服务"
+                    // 构件主页
+                    url = 'https://github.com/dibyang/onlooker'
+                    // 许可证名称和地址
+                    licenses {
+                        license {
+                            name = 'The Apache License, Version 2.0'
+                            url = 'http://www.apache.org/licenses/LICENSE-2.0.txt'
+                        }
+                    }
+                    // 开发者信息
+                    developers {
+                        developer {
+                            id = 'dib.yang'
+                            name = 'yangzj'
+                            email = 'dib.yang@gmail.com'
+                        }
+                    }
+                    // 版本控制仓库地址
+                    scm {
+                        url = 'https://github.com/dibyang/onlooker'
+                        connection = 'scm:git:https://github.com/dibyang/onlooker.git'
+                        developerConnection = 'scm:git:https://github.com/dibyang/onlooker.git'
+                    }
                 }
 
-                versionMapping {
-                    usage('java-api') {
-                        fromResolutionOf('runtimeClasspath')
-                    }
-                    usage('java-runtime') {
-                        fromResolutionResult()
-                    }
-                }
             }
         }
         repositories {
@@ -178,11 +199,10 @@ subprojects {
             }
         }
     }
-
     signing {
         sign publishing.publications.mavenJava
     }
-
-    afterReleaseBuild.dependsOn publishMavenJavaPublicationToMavenRepository
-
 }
+
+
+

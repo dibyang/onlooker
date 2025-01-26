@@ -1,13 +1,11 @@
 package net.xdob.onlooker;
 
-import com.google.common.base.Strings;
-import com.ls.luava.security.RSAUtil;
+
+import net.xdob.onlooker.security.RSAUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.*;
-import java.net.URL;
-import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -18,7 +16,7 @@ public class SignAdmin {
 
   private String getPubicKey(String signer){
     try {
-      if(!Strings.isNullOrEmpty(signer)) {
+      if(signer!=null&&!signer.isEmpty()) {
         File file = Paths.get(LookHelper.i.getPubDir(), signer+".pub").toFile();
         if (file.exists()) {
           return readString(file.toPath());

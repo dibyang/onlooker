@@ -1,8 +1,6 @@
 package net.xdob.onlooker;
 
-import com.google.common.collect.Lists;
-import com.google.common.collect.Maps;
-import com.ls.luava.common.Jsons;
+
 import io.netty.bootstrap.Bootstrap;
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.Unpooled;
@@ -10,22 +8,25 @@ import io.netty.channel.*;
 import io.netty.channel.nio.NioEventLoopGroup;
 import io.netty.channel.socket.DatagramPacket;
 import io.netty.util.CharsetUtil;
+import net.xdob.onlooker.json.Jsons;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.net.InetSocketAddress;
 import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.TimeUnit;
 
 public class UdpClientHandler extends SimpleChannelInboundHandler<DatagramPacket> {
   static final Logger LOG = LoggerFactory.getLogger(UdpClientHandler.class);
   public static final String ANY_ADDRESS = "255.255.255.255";
 
-  private final Map<UUID, List<LookResponse>> responseMap = Maps.newConcurrentMap();
+  private final Map<UUID, List<LookResponse>> responseMap = new ConcurrentHashMap<>();
 
 
   private volatile CompletableFuture<ChannelFuture> channelFuture = null;
@@ -74,7 +75,7 @@ public class UdpClientHandler extends SimpleChannelInboundHandler<DatagramPacket
       if(allResponse!=null){
         completableFuture.complete(allResponse);
       }else{
-        completableFuture.complete(Lists.newArrayList());
+        completableFuture.complete(new ArrayList<>());
       }
     }, Math.max(Math.max(LookHelper.i.getWaitTime(), 10), waitMS), TimeUnit.MILLISECONDS);
     return completableFuture;
@@ -119,7 +120,7 @@ public class UdpClientHandler extends SimpleChannelInboundHandler<DatagramPacket
 
 
   void newRequest(UUID uid){
-    responseMap.put(uid, Lists.newArrayList());
+    responseMap.put(uid, new ArrayList<>());
   }
 
   List<LookResponse> getAllResponse(UUID uid){

@@ -1,6 +1,7 @@
 package net.xdob.onlooker;
 
-import com.ls.luava.utils.FileDebugSupport;
+
+import net.xdob.onlooker.util.FileDebugSupport;
 
 import java.nio.file.Paths;
 
